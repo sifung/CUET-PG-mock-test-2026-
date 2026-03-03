@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CUET Mock Test — Computer Science</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --card: #1a2035;
+    --border: #2a3550;
+    --accent: #4f8ef7;
+    --accent2: #a78bfa;
+    --accent3: #34d399;
+    --accent4: #f59e0b;
+    --danger: #f87171;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --correct: #10b981;
+    --wrong: #ef4444;
+    --unanswered: #f59e0b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(79,142,247,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79,142,247,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; position: relative; z-index: 1; }
+  .screen.active { display: block; }
+
+  /* ── START SCREEN ── */
+  #startScreen {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; padding: 40px 20px;
+  }
+  .hero-badge {
+    background: linear-gradient(135deg, rgba(79,142,247,0.15), rgba(167,139,250,0.15));
+    border: 1px solid rgba(79,142,247,0.3);
+    border-radius: 50px; padding: 6px 20px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 24px;
+  }
+  .hero-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(36px, 7vw, 72px);
+    font-weight: 800; line-height: 1.05;
+    text-align: center; margin-bottom: 12px;
+    background: linear-gradient(135deg, #e2e8f0 0%, #4f8ef7 50%, #a78bfa 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-sub {
+    font-size: 16px; color: var(--muted);
+    text-align: center; margin-bottom: 40px; max-width: 560px;
+    line-height: 1.6;
+  }
+  .topics-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px; width: 100%; max-width: 900px; margin-bottom: 40px;
+  }
+  .topic-chip {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 16px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; font-weight: 500;
+    transition: all 0.2s;
+  }
+  .topic-chip:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .topic-chip .icon { font-size: 20px; flex-shrink: 0; }
+  .topic-chip .count {
+    margin-left: auto;
+    background: rgba(79,142,247,0.15);
+    color: var(--accent);
+    border-radius: 20px; padding: 2px 8px;
+    font-family: 'Space Mono', monospace; font-size: 11px;
+  }
+  .stats-row {
+    display: flex; gap: 32px; margin-bottom: 40px;
+    flex-wrap: wrap; justify-content: center;
+  }
+  .stat { text-align: center; }
+  .stat-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 32px; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
+  .btn-start {
+    background: linear-gradient(135deg, #4f8ef7, #a78bfa);
+    color: white; border: none; border-radius: 16px;
+    padding: 18px 48px; font-size: 17px; font-weight: 700;
+    font-family: 'Syne', sans-serif; cursor: pointer;
+    transition: all 0.3s; letter-spacing: 0.5px;
+    box-shadow: 0 8px 32px rgba(79,142,247,0.35);
+  }
+  .btn-start:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 48px rgba(79,142,247,0.5);
+  }
+
+  /* ── QUIZ SCREEN ── */
+  #quizScreen { padding: 20px; min-height: 100vh; }
+
+  .quiz-header {
+    max-width: 820px; margin: 0 auto 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .quiz-progress-info {
+    font-family: 'Space Mono', monospace; font-size: 12px; color: var(--muted);
+  }
+  .quiz-progress-info strong { color: var(--accent); font-size: 16px; }
+  .timer-box {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 8px 16px;
+    font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700;
+    color: var(--accent4);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .timer-box.warning { color: var(--danger); border-color: var(--danger); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.6 } }
+
+  .progress-bar-wrap {
+    max-width: 820px; margin: 0 auto 24px;
+    background: var(--border); border-radius: 99px; height: 6px; overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.4s cubic-bezier(.4,0,.2,1);
+  }
+
+  .topic-label {
+    max-width: 820px; margin: 0 auto 16px;
+    display: inline-block;
+  }
+  .topic-pill {
+    background: rgba(79,142,247,0.12);
+    border: 1px solid rgba(79,142,247,0.25);
+    border-radius: 50px; padding: 4px 14px;
+    font-size: 12px; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--accent); font-family: 'Space Mono', monospace;
+  }
+
+  .question-card {
+    max-width: 820px; margin: 0 auto;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px; padding: 32px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    animation: slideUp 0.35s cubic-bezier(.4,0,.2,1);
+  }
+  @keyframes slideUp {
+    from { opacity:0; transform: translateY(24px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+  .question-num {
+    font-family: 'Space Mono', monospace; font-size: 12px;
+    color: var(--muted); margin-bottom: 14px; letter-spacing: 1px;
+  }
+  .question-text {
+    font-family: 'Syne', sans-serif; font-size: 19px; font-weight: 600;
+    line-height: 1.5; margin-bottom: 28px; color: #f1f5f9;
+  }
+  .options-list { display: flex; flex-direction: column; gap: 10px; }
+  .option-btn {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 14px; padding: 14px 20px;
+    text-align: left; cursor: pointer;
+    font-size: 15px; font-family: 'DM Sans', sans-serif;
+    color: var(--text); transition: all 0.2s;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .option-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: rgba(79,142,247,0.08);
+    transform: translateX(4px);
+  }
+  .option-btn .opt-letter {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(79,142,247,0.12);
+    border: 1px solid rgba(79,142,247,0.25);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Mono', monospace; font-size: 12px;
+    font-weight: 700; color: var(--accent); flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .option-btn.selected {
+    border-color: var(--accent); background: rgba(79,142,247,0.12);
+  }
+  .option-btn.selected .opt-letter { background: var(--accent); color: white; }
+  .option-btn.correct {
+    border-color: var(--correct); background: rgba(16,185,129,0.1);
+  }
+  .option-btn.correct .opt-letter { background: var(--correct); color: white; }
+  .option-btn.wrong {
+    border-color: var(--wrong); background: rgba(239,68,68,0.1);
+  }
+  .option-btn.wrong .opt-letter { background: var(--wrong); color: white; }
+  .option-btn:disabled { cursor: default; }
+
+  .explanation-box {
+    margin-top: 20px;
+    background: rgba(52,211,153,0.08);
+    border: 1px solid rgba(52,211,153,0.25);
+    border-radius: 14px; padding: 16px 20px;
+    font-size: 14px; line-height: 1.6; color: #a7f3d0;
+    animation: fadeIn 0.3s ease;
+    display: none;
+  }
+  .explanation-box.show { display: block; }
+  @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+  .explanation-box strong { color: var(--accent3); }
+
+  .quiz-footer {
+    max-width: 820px; margin: 24px auto 0;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .btn-nav {
+    background: var(--card); border: 1.5px solid var(--border);
+    color: var(--text); border-radius: 12px; padding: 12px 24px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .btn-nav:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-nav:disabled { opacity: 0.35; cursor: default; }
+  .btn-submit-final {
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    color: white; border: none; border-radius: 12px;
+    padding: 12px 28px; font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s; font-family: 'Syne', sans-serif;
+    box-shadow: 0 4px 20px rgba(245,158,11,0.3);
+  }
+  .btn-submit-final:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(245,158,11,0.45); }
+
+  .question-nav {
+    max-width: 820px; margin: 20px auto 0;
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .q-dot {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-family: 'Space Mono', monospace;
+    cursor: pointer; transition: all 0.2s; border: 1.5px solid var(--border);
+    background: var(--surface); color: var(--muted);
+  }
+  .q-dot.current { border-color: var(--accent); color: var(--accent); background: rgba(79,142,247,0.1); }
+  .q-dot.answered { background: rgba(79,142,247,0.15); border-color: var(--accent); color: var(--accent); }
+  .q-dot.correct { background: rgba(16,185,129,0.15); border-color: var(--correct); color: var(--correct); }
+  .q-dot.wrong { background: rgba(239,68,68,0.15); border-color: var(--wrong); color: var(--wrong); }
+
+  /* ── RESULT SCREEN ── */
+  #resultScreen { padding: 40px 20px; min-height: 100vh; }
+  .result-header {
+    text-align: center; max-width: 700px; margin: 0 auto 40px;
+  }
+  .result-emoji { font-size: 64px; margin-bottom: 16px; animation: bounce 0.6s ease; }
+  @keyframes bounce {
+    0%,100% { transform: translateY(0) } 40% { transform: translateY(-20px) } 70% { transform: translateY(-8px) }
+  }
+  .result-title {
+    font-family: 'Syne', sans-serif; font-size: clamp(28px, 5vw, 48px);
+    font-weight: 800; margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .result-subtitle { color: var(--muted); font-size: 15px; }
+
+  .score-ring-wrap {
+    display: flex; justify-content: center; margin-bottom: 40px;
+  }
+  .score-ring {
+    position: relative; width: 160px; height: 160px;
+  }
+  .score-ring svg { transform: rotate(-90deg); }
+  .score-ring-center {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .score-pct {
+    font-family: 'Space Mono', monospace; font-size: 30px; font-weight: 700;
+    color: var(--accent);
+  }
+  .score-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  .result-stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px; max-width: 700px; margin: 0 auto 40px;
+  }
+  .res-stat {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px 16px; text-align: center;
+  }
+  .res-stat-val {
+    font-family: 'Space Mono', monospace; font-size: 28px; font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .res-stat-val.green { color: var(--correct); }
+  .res-stat-val.red { color: var(--wrong); }
+  .res-stat-val.yellow { color: var(--unanswered); }
+  .res-stat-val.blue { color: var(--accent); }
+  .res-stat-label { font-size: 12px; color: var(--muted); letter-spacing: 0.5px; }
+
+  .topic-breakdown {
+    max-width: 700px; margin: 0 auto 40px;
+  }
+  .topic-breakdown h3 {
+    font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700;
+    margin-bottom: 16px; color: var(--text);
+  }
+  .tb-row {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px 18px; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .tb-name { font-size: 14px; font-weight: 500; flex: 1; }
+  .tb-bar-wrap { flex: 2; height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .tb-bar { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .tb-score { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+  .review-section {
+    max-width: 820px; margin: 0 auto 40px;
+  }
+  .review-section h3 {
+    font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700;
+    margin-bottom: 20px; color: var(--text);
+  }
+  .review-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px 24px; margin-bottom: 14px;
+  }
+  .review-card.correct-card { border-left: 4px solid var(--correct); }
+  .review-card.wrong-card { border-left: 4px solid var(--wrong); }
+  .review-card.skip-card { border-left: 4px solid var(--unanswered); }
+  .review-q { font-size: 14px; font-weight: 600; margin-bottom: 10px; line-height: 1.5; }
+  .review-answers { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+  .review-ans { font-size: 13px; padding: 4px 0; }
+  .review-ans.your { color: var(--wrong); }
+  .review-ans.your.correct { color: var(--correct); }
+  .review-ans.right { color: var(--correct); }
+  .review-exp { font-size: 13px; color: var(--muted); line-height: 1.5; padding-top: 8px; border-top: 1px solid var(--border); }
+
+  .result-actions {
+    display: flex; gap: 16px; justify-content: center; max-width: 700px;
+    margin: 0 auto; flex-wrap: wrap;
+  }
+  .btn-restart {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white; border: none; border-radius: 14px;
+    padding: 16px 40px; font-size: 16px; font-weight: 700;
+    font-family: 'Syne', sans-serif; cursor: pointer;
+    transition: all 0.3s; box-shadow: 0 6px 24px rgba(79,142,247,0.35);
+  }
+  .btn-restart:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(79,142,247,0.5); }
+
+  .grade-badge {
+    display: inline-block;
+    padding: 6px 24px; border-radius: 50px;
+    font-family: 'Space Mono', monospace; font-weight: 700; font-size: 14px;
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 600px) {
+    .question-card { padding: 20px 16px; }
+    .quiz-footer { flex-direction: column; }
+    .question-text { font-size: 16px; }
+    .topic-chip .icon { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════ START SCREEN ══════════════════════ -->
+<div id="startScreen" class="screen active">
+  <div class="hero-badge">🎓 CUET Computer Science Prep</div>
+  <h1 class="hero-title">Mock Test</h1>
+  <p class="hero-sub">70 carefully crafted MCQs covering all 7 CUET Computer Science topics. Timed, scored, and reviewed.</p>
+
+  <div class="stats-row">
+    <div class="stat"><div class="stat-val">70</div><div class="stat-label">Questions</div></div>
+    <div class="stat"><div class="stat-val">90</div><div class="stat-label">Minutes</div></div>
+    <div class="stat"><div class="stat-val">7</div><div class="stat-label">Topics</div></div>
+    <div class="stat"><div class="stat-val">+4/–1</div><div class="stat-label">Marking</div></div>
+  </div>
+
+  <div class="topics-grid">
+    <div class="topic-chip"><span class="icon">🤖</span>Artificial Intelligence<span class="count">10</span></div>
+    <div class="topic-chip"><span class="icon">🌐</span>Computer Networks<span class="count">10</span></div>
+    <div class="topic-chip"><span class="icon">💾</span>Data Structures<span class="count">10</span></div>
+    <div class="topic-chip"><span class="icon">🖥️</span>Operating Systems<span class="count">10</span></div>
+    <div class="topic-chip"><span class="icon">⚙️</span>Computer Organisation<span class="count">10</span></div>
+    <div class="topic-chip"><span class="icon">🔌</span>Digital Logic<span class="count">10</span></div>
+    <div class="topic-chip"><span class="icon">🔐</span>Cryptography<span class="count">10</span></div>
+  </div>
+
+  <button class="btn-start" onclick="startQuiz()">Start Mock Test →</button>
+</div>
+
+<!-- ══════════════════════ QUIZ SCREEN ══════════════════════ -->
+<div id="quizScreen" class="screen">
+  <div class="quiz-header">
+    <div class="quiz-progress-info">
+      Question <strong id="qNumDisplay">1</strong> of <strong>70</strong>
+    </div>
+    <div class="timer-box" id="timerBox">
+      ⏱ <span id="timerDisplay">90:00</span>
+    </div>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+  </div>
+  <div class="topic-label">
+    <span class="topic-pill" id="topicPill">Topic</span>
+  </div>
+  <div class="question-card" id="questionCard">
+    <div class="question-num" id="questionNum">Q1</div>
+    <div class="question-text" id="questionText"></div>
+    <div class="options-list" id="optionsList"></div>
+    <div class="explanation-box" id="explanationBox"></div>
+  </div>
+  <div class="quiz-footer">
+    <button class="btn-nav" id="prevBtn" onclick="navigate(-1)" disabled>← Previous</button>
+    <button class="btn-submit-final" onclick="confirmSubmit()">Submit Test</button>
+    <button class="btn-nav" id="nextBtn" onclick="navigate(1)">Next →</button>
+  </div>
+  <div class="question-nav" id="questionNav"></div>
+</div>
+
+<!-- ══════════════════════ RESULT SCREEN ══════════════════════ -->
+<div id="resultScreen" class="screen">
+  <div class="result-header">
+    <div class="result-emoji" id="resultEmoji">🎉</div>
+    <div class="grade-badge" id="gradeBadge">Grade: A</div>
+    <div class="result-title" id="resultTitle">Excellent Work!</div>
+    <div class="result-subtitle" id="resultSubtitle">Here's your detailed performance analysis</div>
+  </div>
+  <div class="score-ring-wrap">
+    <div class="score-ring">
+      <svg width="160" height="160" viewBox="0 0 160 160">
+        <circle cx="80" cy="80" r="65" fill="none" stroke="#2a3550" stroke-width="12"/>
+        <circle cx="80" cy="80" r="65" fill="none" stroke="url(#ringGrad)" stroke-width="12"
+          stroke-linecap="round" id="scoreCircle" stroke-dasharray="408.4" stroke-dashoffset="408.4"/>
+        <defs>
+          <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#4f8ef7"/>
+            <stop offset="100%" stop-color="#a78bfa"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="score-ring-center">
+        <div class="score-pct" id="scorePct">0%</div>
+        <div class="score-label">Score</div>
+      </div>
+    </div>
+  </div>
+  <div class="result-stats" id="resultStats"></div>
+  <div class="topic-breakdown" id="topicBreakdown">
+    <h3>📊 Topic-wise Performance</h3>
+  </div>
+  <div class="review-section" id="reviewSection">
+    <h3>📝 Question Review</h3>
+  </div>
+  <div class="result-actions">
+    <button class="btn-restart" onclick="restartQuiz()">🔄 Retake Test</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// QUESTION BANK — 70 MCQs across 7 topics
+// ═══════════════════════════════════════════
+const questions = [
+
+  // ── ARTIFICIAL INTELLIGENCE (10 questions) ──
+  {topic:"Artificial Intelligence", q:"The term 'Artificial Intelligence' was coined at the Dartmouth Conference in 1956 by:",
+   opts:["Alan Turing","John McCarthy","Marvin Minsky","Claude Shannon"], ans:1,
+   exp:"John McCarthy coined the term 'Artificial Intelligence' at the Dartmouth Conference in 1956. Alan Turing proposed the Turing Test in 1950."},
+  {topic:"Artificial Intelligence", q:"Which property of a task environment means that the next state is completely determined by the current state and the action executed by the agent?",
+   opts:["Fully Observable","Episodic","Deterministic","Static"], ans:2,
+   exp:"A deterministic environment is one where the next state is completely determined by the current state and action. If the environment is not deterministic, it is stochastic."},
+  {topic:"Artificial Intelligence", q:"In the A* search algorithm, the evaluation function f(n) is defined as:",
+   opts:["f(n) = h(n)","f(n) = g(n)","f(n) = g(n) + h(n)","f(n) = g(n) × h(n)"], ans:2,
+   exp:"A* uses f(n) = g(n) + h(n), where g(n) is the actual cost from start to node n, and h(n) is the heuristic estimate from n to goal."},
+  {topic:"Artificial Intelligence", q:"Which uninformed search strategy uses a LIFO (Last In, First Out) data structure?",
+   opts:["Breadth-First Search","Uniform Cost Search","Depth-First Search","Iterative Deepening DFS"], ans:2,
+   exp:"Depth-First Search (DFS) uses a LIFO stack. Breadth-First Search uses a FIFO queue. IDDFS uses recursion (implicit stack)."},
+  {topic:"Artificial Intelligence", q:"A heuristic h(n) is said to be ADMISSIBLE if:",
+   opts:["It always overestimates the true cost","It never overestimates the true cost to goal","It equals the true cost to goal","It is consistent and monotone"], ans:1,
+   exp:"An admissible heuristic never overestimates the actual cost to reach the goal: h(n) ≤ h*(n) where h*(n) is the true cost. This guarantees A* finds the optimal solution."},
+  {topic:"Artificial Intelligence", q:"Which type of agent selects actions that maximise expected utility rather than just reacting to the current state?",
+   opts:["Simple Reflex Agent","Model-Based Reflex Agent","Goal-Based Agent","Utility-Based Agent"], ans:3,
+   exp:"A Utility-Based Agent uses a utility function to measure the desirability of states and chooses actions that maximise expected utility, handling trade-offs between conflicting goals."},
+  {topic:"Artificial Intelligence", q:"The Turing Test primarily evaluates machine intelligence based on:",
+   opts:["Logical reasoning ability","The ability to act indistinguishably from a human in text conversation","Mathematical computation speed","Problem-solving in games like chess"], ans:1,
+   exp:"Alan Turing's test (1950) checks if a machine can exhibit intelligent behaviour indistinguishable from a human in a text conversation. The evaluator cannot tell which is the machine."},
+  {topic:"Artificial Intelligence", q:"In BFS, the time and space complexity for a branching factor b and solution depth d is:",
+   opts:["O(b^d) time, O(b*d) space","O(b^d) time, O(b^d) space","O(b*d) time, O(b^d) space","O(d) time, O(d) space"], ans:1,
+   exp:"BFS has O(b^d) time complexity (explores all nodes up to depth d) and O(b^d) space complexity (must keep all frontier nodes in memory — its major drawback)."},
+  {topic:"Artificial Intelligence", q:"Which knowledge representation technique uses IF-THEN rules and is the foundation of Expert Systems?",
+   opts:["Semantic Networks","Frames","Production Rules","Ontologies"], ans:2,
+   exp:"Production Rules (IF-THEN rules) are the basis of Expert Systems. The inference engine applies rules to facts in the Knowledge Base using forward or backward chaining."},
+  {topic:"Artificial Intelligence", q:"In First Order Logic, which quantifier means 'there exists at least one object for which the predicate is true'?",
+   opts:["∀ (Universal quantifier)","∃ (Existential quantifier)","¬ (Negation)","⇒ (Implication)"], ans:1,
+   exp:"∃ (Existential quantifier) means 'there exists'. ∀ (Universal quantifier) means 'for all'. The negation: ¬∃x P(x) ≡ ∀x ¬P(x)."},
+
+  // ── COMPUTER NETWORKS (10 questions) ──
+  {topic:"Computer Networks", q:"How many layers are in the OSI (Open Systems Interconnection) model?",
+   opts:["4","5","6","7"], ans:3,
+   exp:"The OSI model has 7 layers: Physical, Data Link, Network, Transport, Session, Presentation, Application. Mnemonic (bottom-up): Please Do Not Throw Sausage Pizza Away."},
+  {topic:"Computer Networks", q:"Which layer of the OSI model is responsible for logical addressing and routing of packets?",
+   opts:["Data Link Layer","Network Layer","Transport Layer","Session Layer"], ans:1,
+   exp:"The Network Layer (Layer 3) handles logical (IP) addressing and routing. Protocols: IP, ICMP, OSPF, RIP. The Data Link Layer handles physical (MAC) addressing."},
+  {topic:"Computer Networks", q:"In the TCP/IP model, which layer corresponds to BOTH Session and Presentation layers of the OSI model?",
+   opts:["Transport Layer","Internet Layer","Network Access Layer","Application Layer"], ans:3,
+   exp:"In TCP/IP's 4-layer model, the Application Layer corresponds to OSI's Application + Presentation + Session layers combined."},
+  {topic:"Computer Networks", q:"What is the default subnet mask for a Class B IP address?",
+   opts:["255.0.0.0","255.255.0.0","255.255.255.0","255.255.255.255"], ans:1,
+   exp:"Class B: first octet range 128-191, default subnet mask 255.255.0.0 (/16). Class A: 255.0.0.0. Class C: 255.255.255.0."},
+  {topic:"Computer Networks", q:"Which port number is used by HTTPS (HTTP Secure)?",
+   opts:["80","8080","443","22"], ans:2,
+   exp:"HTTPS uses port 443. HTTP uses port 80. SSH uses port 22. HTTP alternative is port 8080. HTTPS is HTTP over SSL/TLS encryption."},
+  {topic:"Computer Networks", q:"In the Sliding Window protocol, Go-Back-N with n sequence-number bits allows a sender window size of at most:",
+   opts:["2^n","2^n - 1","2^(n-1)","n"], ans:1,
+   exp:"Go-Back-N (GBN) sender window size = 2^n - 1. Selective Repeat (SR) uses both sender and receiver window = 2^(n-1). The difference is due to SR needing to buffer out-of-order frames."},
+  {topic:"Computer Networks", q:"Which routing protocol uses the Dijkstra's algorithm and is classified as a Link State protocol?",
+   opts:["RIP (Routing Information Protocol)","BGP (Border Gateway Protocol)","OSPF (Open Shortest Path First)","EIGRP"], ans:2,
+   exp:"OSPF (Open Shortest Path First) is a Link State routing protocol that uses Dijkstra's shortest path algorithm. RIP uses Distance Vector (Bellman-Ford). BGP is a Path Vector protocol."},
+  {topic:"Computer Networks", q:"The DNS (Domain Name System) primarily uses which transport protocol and port?",
+   opts:["TCP, Port 53","UDP, Port 53","TCP, Port 80","UDP, Port 25"], ans:1,
+   exp:"DNS uses UDP port 53 for standard queries (fast). It uses TCP port 53 for zone transfers (reliable, large data). UDP is preferred for the small request-response nature of DNS queries."},
+  {topic:"Computer Networks", q:"Which device operates at the Network Layer (Layer 3) and separates both collision domains AND broadcast domains?",
+   opts:["Hub","Switch","Bridge","Router"], ans:3,
+   exp:"Routers operate at Layer 3 and separate both collision and broadcast domains using IP addresses. Switches separate collision domains but not broadcast domains. Hubs separate neither."},
+  {topic:"Computer Networks", q:"In asymmetric (public key) cryptography, to send a confidential message to Bob, Alice should encrypt using:",
+   opts:["Alice's public key","Alice's private key","Bob's public key","Bob's private key"], ans:2,
+   exp:"For confidentiality: encrypt with RECIPIENT's public key. Only the recipient's private key can decrypt it. For digital signature: sign with sender's private key, verify with sender's public key."},
+
+  // ── DATA STRUCTURES (10 questions) ──
+  {topic:"Data Structures & Programming", q:"What is the time complexity of accessing an element at index i in an array?",
+   opts:["O(n)","O(log n)","O(1)","O(n log n)"], ans:2,
+   exp:"Arrays provide O(1) random access because elements are stored contiguously. Address = base + i × sizeof(type) — direct computation, no traversal needed."},
+  {topic:"Data Structures & Programming", q:"Which data structure follows the LIFO (Last In, First Out) principle?",
+   opts:["Queue","Stack","Linked List","Binary Tree"], ans:1,
+   exp:"A Stack follows LIFO — the last element inserted is the first to be removed. Operations: push (insert) and pop (remove). Queues follow FIFO. Real-world analogy: stack of plates."},
+  {topic:"Data Structures & Programming", q:"In parameter passing in C, when an array is passed to a function, what is actually passed?",
+   opts:["A copy of all array elements","The address of the last element","The address of the first element (pointer)","The size of the array"], ans:2,
+   exp:"In C, when you pass an array to a function, the array name decays to a pointer to its first element. This means arrays are ALWAYS passed by reference — changes inside the function affect the original."},
+  {topic:"Data Structures & Programming", q:"The minimum number of moves required to solve the Tower of Hanoi problem with n disks is:",
+   opts:["n²","n!","2^n - 1","2n - 1"], ans:2,
+   exp:"Tower of Hanoi requires exactly 2^n - 1 moves for n disks. For 3 disks: 7 moves. For 4 disks: 15 moves. The recurrence relation is T(n) = 2T(n-1) + 1."},
+  {topic:"Data Structures & Programming", q:"Which sorting algorithm has O(n log n) time complexity in ALL cases (best, average, and worst)?",
+   opts:["Quick Sort","Bubble Sort","Merge Sort","Insertion Sort"], ans:2,
+   exp:"Merge Sort always takes O(n log n) time regardless of input. Quick Sort degrades to O(n²) in the worst case (e.g., already sorted array with last-element pivot). Bubble and Insertion are O(n²) average."},
+  {topic:"Data Structures & Programming", q:"In a singly linked list, what is the time complexity of inserting a node at the BEGINNING?",
+   opts:["O(n)","O(log n)","O(1)","O(n²)"], ans:2,
+   exp:"Inserting at the beginning of a singly linked list is O(1) — just update the new node's next pointer to the current head, then update head to the new node. No traversal needed."},
+  {topic:"Data Structures & Programming", q:"Which traversal of a Binary Search Tree (BST) produces nodes in SORTED (ascending) order?",
+   opts:["Preorder (NLR)","Postorder (LRN)","Inorder (LNR)","Level-order (BFS)"], ans:2,
+   exp:"Inorder traversal (Left → Node → Right) of a BST visits nodes in ascending order. Preorder gives prefix expression. Postorder gives postfix expression. Level-order is BFS."},
+  {topic:"Data Structures & Programming", q:"In a Max-Heap, the element at the ROOT is always:",
+   opts:["The smallest element","The most recently inserted element","The largest element","The median element"], ans:2,
+   exp:"In a Max-Heap, every parent is ≥ both its children, so the root always contains the maximum element. In a Min-Heap, the root is the minimum. Accessing min/max is O(1)."},
+  {topic:"Data Structures & Programming", q:"Floyd's cycle detection algorithm (tortoise and hare) uses:",
+   opts:["One pointer moving 2 steps","Two pointers: slow (1 step) and fast (2 steps)","Three pointers","A hash set to track visited nodes"], ans:1,
+   exp:"Floyd's algorithm uses two pointers: slow moves 1 step and fast moves 2 steps per iteration. If a cycle exists, they will eventually meet. Time: O(n), Space: O(1)."},
+  {topic:"Data Structures & Programming", q:"A circular queue with MAX=5 uses (rear+1)%MAX to find the next rear position. If front=2 and rear=4, how many elements can still be added?",
+   opts:["1","2","3","0"], ans:1,
+   exp:"Circular queue is full when (rear+1)%MAX == front. Rear=4, so (4+1)%5=0. Front=2, so not full yet. Elements present: rear-front+1 = 4-2+1 = 3. Space remaining = MAX-1-3 = 1."},
+
+  // ── OPERATING SYSTEMS (10 questions) ──
+  {topic:"Operating Systems", q:"Which of the following is NOT one of the four necessary conditions for a deadlock to occur?",
+   opts:["Mutual Exclusion","Hold and Wait","Preemption","Circular Wait"], ans:2,
+   exp:"Coffman's 4 conditions for deadlock: Mutual Exclusion, Hold and Wait, NO Preemption (not Preemption), and Circular Wait. ALL four must hold simultaneously for deadlock to occur."},
+  {topic:"Operating Systems", q:"In the Banker's Algorithm, a system is in a SAFE state if:",
+   opts:["No process is in the waiting state","There exists a safe sequence of all processes","All resources are allocated","No deadlock has occurred yet"], ans:1,
+   exp:"In Banker's Algorithm, a safe state means there exists at least one safe sequence — an ordering of processes such that each can obtain its remaining needed resources, execute, and release them."},
+  {topic:"Operating Systems", q:"Which CPU scheduling algorithm can suffer from the 'Convoy Effect'?",
+   opts:["Shortest Job First (SJF)","Round Robin","First Come First Served (FCFS)","Priority Scheduling"], ans:2,
+   exp:"FCFS suffers from the Convoy Effect — short processes get stuck waiting behind a long process. This leads to poor average waiting time. Round Robin prevents this by giving each process equal CPU time."},
+  {topic:"Operating Systems", q:"In Round Robin scheduling with a quantum q, what happens if the quantum is too large?",
+   opts:["Leads to better fairness","Degenerates to FCFS","Causes starvation","Increases context switches"], ans:1,
+   exp:"If the time quantum is very large (larger than any process burst), Round Robin degenerates to FCFS — each process runs to completion before being preempted. If too small, too many context switches occur."},
+  {topic:"Operating Systems", q:"Paging eliminates which type of fragmentation but introduces which other type?",
+   opts:["Internal; External","External; Internal","Both; Neither","Neither; Both"], ans:1,
+   exp:"Paging eliminates external fragmentation (no holes between allocations — frames are fixed size). However, it introduces internal fragmentation: the last page of a process may not be completely full."},
+  {topic:"Operating Systems", q:"Which page replacement algorithm suffers from Belady's Anomaly (more frames → more page faults)?",
+   opts:["LRU (Least Recently Used)","Optimal (OPT)","FIFO (First In, First Out)","Second Chance"], ans:2,
+   exp:"FIFO can exhibit Belady's Anomaly — increasing frames can actually increase page faults. LRU and OPT are stack algorithms and do NOT suffer from Belady's Anomaly."},
+  {topic:"Operating Systems", q:"A process is in the 'BLOCKED' or 'WAITING' state when:",
+   opts:["It is currently executing on the CPU","It is ready to run but waiting for CPU","It is waiting for an I/O event or resource","It has just been created"], ans:2,
+   exp:"A process enters the Waiting/Blocked state when it requests I/O, waits for an event, or waits for a resource. It transitions to Ready when the event completes, then to Running when scheduled."},
+  {topic:"Operating Systems", q:"Which IPC mechanism is the FASTEST for processes on the same machine?",
+   opts:["Message Queues","Sockets","Shared Memory","Pipes"], ans:2,
+   exp:"Shared Memory is the fastest IPC mechanism — after initial setup, processes access shared memory directly without kernel involvement. No copying occurs. However, synchronisation (semaphores/mutexes) is needed."},
+  {topic:"Operating Systems", q:"In UNIX/Linux, the fork() system call:",
+   opts:["Replaces current process with a new program","Creates a child process as a copy of the parent","Terminates the current process","Suspends the current process"], ans:1,
+   exp:"fork() creates a new child process that is an exact copy of the parent (same memory, code, data). Returns 0 to child, child's PID to parent. exec() is used to load a new program into a process."},
+  {topic:"Operating Systems", q:"Thrashing in virtual memory occurs when:",
+   opts:["CPU utilisation reaches 100%","Process spends more time paging than executing","Too many processes are in ready queue","Page table becomes too large"], ans:1,
+   exp:"Thrashing occurs when processes don't have enough frames — they constantly page fault and spend more time swapping pages than doing useful work. CPU utilisation drops dramatically. Solution: Working Set model."},
+
+  // ── COMPUTER ORGANISATION & ARCHITECTURE (10 questions) ──
+  {topic:"Computer Organisation & Architecture", q:"In Von Neumann architecture, the 'bottleneck' refers to:",
+   opts:["Slow CPU clock speed","Limited register count","Shared bus between CPU and memory for both instructions and data","Small cache memory"], ans:2,
+   exp:"The Von Neumann bottleneck: since instructions and data share the same memory and bus, they cannot be fetched simultaneously, limiting performance. Harvard architecture solves this with separate instruction/data memories."},
+  {topic:"Computer Organisation & Architecture", q:"Which addressing mode requires TWO memory accesses — one to get the address and one to get the data?",
+   opts:["Immediate","Register","Direct","Indirect"], ans:3,
+   exp:"Indirect addressing: the instruction contains an address, memory at that address contains the actual address, then a second access retrieves the data. That's 2 memory accesses. Direct uses 1 access. Immediate uses 0."},
+  {topic:"Computer Organisation & Architecture", q:"In a 5-stage RISC pipeline (IF-ID-EX-MEM-WB), a RAW (Read After Write) data hazard can be resolved without stalls using:",
+   opts:["Branch prediction","Out-of-order execution","Data forwarding (bypassing)","Increasing cache size"], ans:2,
+   exp:"Data forwarding (bypassing) routes the result directly from a pipeline register (e.g., EX/MEM stage) to the input of the ALU in the EX stage, without waiting for it to be written back. This eliminates most RAW stalls."},
+  {topic:"Computer Organisation & Architecture", q:"Belady's Anomaly in FIFO page replacement is analogous to which pipeline concept?",
+   opts:["Data Hazards","Control Hazards (branch hazards)","More pipeline stages causing worse performance in some cases","Structural Hazards"], ans:2,
+   exp:"This is an analogy question — just as Belady's Anomaly (more frames → more faults) is counterintuitive, deep pipelines can sometimes perform worse due to control hazards. The closest concept is counterintuitive performance degradation."},
+  {topic:"Computer Organisation & Architecture", q:"A cache has a hit rate of 0.95, cache access time of 10 ns, and main memory access time of 100 ns. The average memory access time is:",
+   opts:["14.5 ns","15 ns","19.5 ns","10.5 ns"], ans:0,
+   exp:"AMAT = h × t_cache + (1-h) × t_memory = 0.95 × 10 + 0.05 × 100 = 9.5 + 5 = 14.5 ns. This shows how even a small miss rate significantly impacts performance."},
+  {topic:"Computer Organisation & Architecture", q:"In Direct Mapped Cache, a memory block maps to cache line number:",
+   opts:["Block_number / Cache_size","Block_number + Cache_size","Block_number mod (Number of cache lines)","Block_number × Block_size"], ans:2,
+   exp:"In direct mapped cache, Cache Line = Block_number mod (Total_cache_lines). Each memory block maps to exactly one specific cache line. Address bits: Tag | Line | Offset."},
+  {topic:"Computer Organisation & Architecture", q:"SRAM (Static RAM) is used for cache memory rather than DRAM because:",
+   opts:["SRAM is cheaper","SRAM is much faster and requires no periodic refresh","SRAM has higher capacity","SRAM consumes less power"], ans:1,
+   exp:"SRAM uses flip-flops (6 transistors per bit) — much faster (~1 ns) and needs no refresh. DRAM uses capacitors (1T+1C) that leak charge and need periodic refresh (~every 64ms), making it slower (~60 ns)."},
+  {topic:"Computer Organisation & Architecture", q:"In DMA (Direct Memory Access), the CPU is primarily involved:",
+   opts:["For every byte transferred","Only at the start (setup) and end (completion interrupt)","Not at all — DMA is fully autonomous","Only during error handling"], ans:1,
+   exp:"In DMA, the CPU programs the DMA controller with source address, destination, byte count, and direction. Then the DMA controller transfers data independently. When done, it interrupts the CPU. CPU is free during transfer."},
+  {topic:"Computer Organisation & Architecture", q:"For IEEE 754 single precision, what is the bias used for the exponent field?",
+   opts:["63","127","128","255"], ans:1,
+   exp:"IEEE 754 Single Precision uses a bias of 127. Stored exponent = actual exponent + 127. This allows both positive and negative exponents to be stored as unsigned integers (range: actual -126 to +127)."},
+  {topic:"Computer Organisation & Architecture", q:"Which type of control unit is used in RISC processors for maximum speed?",
+   opts:["Microprogrammed control","Hardwired control","Interpreted control","ROM-based control"], ans:1,
+   exp:"RISC processors use hardwired control — logic implemented directly in gates and flip-flops. It's faster than microprogrammed control because it doesn't need to fetch microinstructions. CISC often uses microprogrammed control."},
+
+  // ── DIGITAL LOGIC (10 questions) ──
+  {topic:"Digital Logic", q:"The decimal number 107 in binary is:",
+   opts:["1100101₂","1101011₂","1010101₂","1110101₂"], ans:1,
+   exp:"107 ÷ 2 = 53 R1; 53÷2=26 R1; 26÷2=13 R0; 13÷2=6 R1; 6÷2=3 R0; 3÷2=1 R1; 1÷2=0 R1. Reading remainders bottom-up: 1101011₂. Verify: 64+32+8+2+1=107 ✓"},
+  {topic:"Digital Logic", q:"Which logic gate is known as a UNIVERSAL gate because it can implement any Boolean function?",
+   opts:["AND gate","OR gate","NAND gate","XOR gate"], ans:2,
+   exp:"NAND and NOR are universal gates — any logic function can be implemented using only NAND (or only NOR) gates. NOT(A) = NAND(A,A); AND(A,B) = NAND(NAND(A,B),NAND(A,B))."},
+  {topic:"Digital Logic", q:"De Morgan's theorem states that (A·B)' equals:",
+   opts:["A'·B'","A'+B'","A+B","A'·B"], ans:1,
+   exp:"De Morgan's first theorem: (A·B)' = A' + B'. Second theorem: (A+B)' = A'·B'. Remember: to negate, flip the operation (AND↔OR) AND negate each variable."},
+  {topic:"Digital Logic", q:"In K-Map simplification, groups must be of size:",
+   opts:["Any size that is a multiple of 2","Powers of 2 only (1, 2, 4, 8, 16...)","Any rectangular shape","Only squares"], ans:1,
+   exp:"K-Map groups must be exact powers of 2 (1, 2, 4, 8, 16). Larger groups = fewer variables in the resulting term = better simplification. Odd-sized groups are not allowed."},
+  {topic:"Digital Logic", q:"A Full Adder has inputs A, B, and Carry-in (Cin). The Sum output is:",
+   opts:["A AND B AND Cin","A OR B OR Cin","A XOR B XOR Cin","A XNOR B XNOR Cin"], ans:2,
+   exp:"Full Adder: Sum S = A ⊕ B ⊕ Cin; Carry-out Cout = AB + Cin(A ⊕ B). The Sum is a 3-input XOR, and Carry-out is a majority function (1 when 2 or more inputs are 1)."},
+  {topic:"Digital Logic", q:"The characteristic equation of a JK Flip-Flop is:",
+   opts:["Q⁺ = J + K'Q","Q⁺ = JQ' + K'Q","Q⁺ = J·K","Q⁺ = J XOR Q"], ans:1,
+   exp:"JK FF characteristic equation: Q⁺ = JQ' + K'Q. When J=K=1: Q⁺ = Q'+Q = 1·(Q'+Q) ... simplifies to Q⁺ = Q' (toggle). JK FF fixes the forbidden state of SR FF."},
+  {topic:"Digital Logic", q:"Which flip-flop is most commonly used in digital registers and has NO forbidden input combinations?",
+   opts:["SR Flip-Flop","JK Flip-Flop","D Flip-Flop","T Flip-Flop"], ans:2,
+   exp:"The D (Data) Flip-Flop has the simplest characteristic equation: Q⁺ = D. It has no forbidden input states. It stores one bit and is used extensively in registers, memory, and data storage."},
+  {topic:"Digital Logic", q:"A 4:1 Multiplexer (MUX) has how many select lines?",
+   opts:["1","2","3","4"], ans:1,
+   exp:"A 2ⁿ:1 MUX needs n select lines. A 4:1 MUX = 2²:1, so n=2 select lines. A 2:1 needs 1 select line. An 8:1 needs 3 select lines."},
+  {topic:"Digital Logic", q:"In IEEE 754 single precision floating point, if Sign=0, Exponent=10000001 (129), Mantissa=01000000000000000000000, the value is:",
+   opts:["+2.5","+5.0","+6.0","+3.5"], ans:1,
+   exp:"Sign=0 (+), Exponent=129-127=2, Value = 1.01 × 2² = 101.0₂ = 5.0₁₀. The mantissa 01000... means 1.01 (implied leading 1 + 0 + 1 = 1.01). 1.01 × 4 = 5.0."},
+  {topic:"Digital Logic", q:"A MOD-10 (decade) counter counts from 0 to 9 and resets. It requires a minimum of how many flip-flops?",
+   opts:["3","4","5","10"], ans:1,
+   exp:"A MOD-10 counter needs to represent 10 states (0-9). Since 2³=8 < 10 ≤ 16=2⁴, we need 4 flip-flops. The counter resets when it reaches 10 (1010): detect Q3·Q1=1 to reset."},
+
+  // ── CRYPTOGRAPHY (10 questions) ──
+  {topic:"Cryptography & Network Security", q:"The CIA triad in information security stands for:",
+   opts:["Cryptography, Integrity, Authentication","Confidentiality, Integrity, Availability","Ciphertext, Identification, Authorisation","Confidentiality, Identification, Authentication"], ans:1,
+   exp:"The CIA Triad: Confidentiality (data accessible only to authorised parties), Integrity (data is accurate and unmodified), Availability (systems accessible when needed). These are the three fundamental security goals."},
+  {topic:"Cryptography & Network Security", q:"Kerckhoffs's Principle states that the security of a cryptosystem should rely on:",
+   opts:["The secrecy of the algorithm","The secrecy of the key, not the algorithm","The complexity of the algorithm","Both the algorithm and the key being secret"], ans:1,
+   exp:"Kerckhoffs's Principle (1883): A cryptosystem should be secure even if everything about the system except the key is public knowledge. Modern cryptography follows this — AES, RSA algorithms are all public."},
+  {topic:"Cryptography & Network Security", q:"In the Caesar cipher with shift k=7, the letter 'W' (position 22) encrypts to:",
+   opts:["B","C","D","E"], ans:2,
+   exp:"C = (P + k) mod 26 = (22 + 7) mod 26 = 29 mod 26 = 3 = D. Verify: W(22)+7=29; 29-26=3=D. The wrap-around (mod 26) handles letters near the end of the alphabet."},
+  {topic:"Cryptography & Network Security", q:"In the Playfair cipher, when two plaintext letters are in the SAME COLUMN of the 5×5 matrix, they are replaced by:",
+   opts:["Letters to their right in the same row","Letters above them in the same column","Letters below them in the same column","Letters in the opposite corners of the rectangle they form"], ans:2,
+   exp:"Playfair rules: Same row → shift right; Same column → shift DOWN (replace with letter below; wrap around if at bottom); Different row+column → rectangle swap (same row, other letter's column)."},
+  {topic:"Cryptography & Network Security", q:"The Hill cipher is vulnerable to which type of attack?",
+   opts:["Ciphertext Only Attack (COA)","Brute Force Attack","Known Plaintext Attack (KPA)","Frequency Analysis Attack"], ans:2,
+   exp:"Hill cipher is vulnerable to Known Plaintext Attack (KPA). If an attacker knows n plaintext-ciphertext pairs (each n letters long), they can solve K = C × P⁻¹ mod 26 to recover the key matrix."},
+  {topic:"Cryptography & Network Security", q:"ROT13 is a special case of the Caesar cipher with shift value:",
+   opts:["3","7","13","25"], ans:2,
+   exp:"ROT13 uses k=13. Since 26/2=13, applying ROT13 twice returns the original text (13+13=26≡0 mod 26). It is a self-inverse cipher. Widely used online to hide spoilers."},
+  {topic:"Cryptography & Network Security", q:"In the Playfair cipher, if the plaintext contains a double letter like 'LL' in a pair, it is handled by:",
+   opts:["Simply encrypting LL together","Inserting 'X' between the double letters: L X L","Removing one of the duplicate letters","Replacing both with a single letter"], ans:1,
+   exp:"In Playfair, if both letters in a pair are the same (e.g., LL), insert X between them to break the pair: BALLOON → BA-LX-LO-ON. This is a preprocessing rule before encryption begins."},
+  {topic:"Cryptography & Network Security", q:"The One-Time Pad is theoretically unbreakable because:",
+   opts:["It uses a very long key","The key is randomly generated","For every ciphertext, every possible plaintext is equally likely — no information leaks","It uses complex mathematical operations"], ans:2,
+   exp:"Shannon proved OTP achieves perfect secrecy: given a ciphertext, every possible plaintext is equally likely, so an attacker gains zero information. The key must be: truly random, as long as message, never reused."},
+  {topic:"Cryptography & Network Security", q:"For Hill cipher, the key matrix K must be invertible modulo 26. This requires that det(K) mod 26 is:",
+   opts:["Equal to 1","Equal to 0","Coprime with 26 (gcd(det(K), 26) = 1)","An even number"], ans:2,
+   exp:"For K⁻¹ to exist mod 26, det(K) must be coprime with 26 (gcd(det(K), 26) = 1). Since 26=2×13, det(K) must be odd AND not divisible by 13. If det(K)=0, K is singular and non-invertible."},
+  {topic:"Cryptography & Network Security", q:"In the symmetric cipher model, what does Kerckhoffs's principle imply about the encryption algorithm?",
+   opts:["It must be kept completely secret","It can be made public — security depends only on the key","It should be changed regularly","It must use at least 256 bits"], ans:1,
+   exp:"Kerckhoffs's principle implies the algorithm should be (and in practice is) publicly known. This allows public scrutiny and security analysis. Only the KEY must be kept secret. AES, RSA, DES are all public algorithms."}
+];
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let currentQ = 0;
+let answers = new Array(questions.length).fill(-1);
+let revealed = new Array(questions.length).fill(false);
+let timerInterval = null;
+let secondsLeft = 90 * 60;
+let testSubmitted = false;
+
+// ═══════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════
+function startQuiz() {
+  document.getElementById('startScreen').classList.remove('active');
+  document.getElementById('quizScreen').classList.add('active');
+  renderQuestion();
+  renderNav();
+  startTimer();
+}
+
+// ═══════════════════════════════════════════
+// TIMER
+// ═══════════════════════════════════════════
+function startTimer() {
+  timerInterval = setInterval(() => {
+    secondsLeft--;
+    const m = Math.floor(secondsLeft / 60);
+    const s = secondsLeft % 60;
+    document.getElementById('timerDisplay').textContent =
+      `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    const box = document.getElementById('timerBox');
+    if (secondsLeft <= 300) box.classList.add('warning');
+    if (secondsLeft <= 0) { clearInterval(timerInterval); submitQuiz(); }
+  }, 1000);
+}
+
+// ═══════════════════════════════════════════
+// RENDER QUESTION
+// ═══════════════════════════════════════════
+function renderQuestion() {
+  const q = questions[currentQ];
+  document.getElementById('qNumDisplay').textContent = currentQ + 1;
+  document.getElementById('questionNum').textContent = `Q${currentQ + 1} of ${questions.length}`;
+  document.getElementById('questionText').textContent = q.q;
+  document.getElementById('topicPill').textContent = q.topic;
+  document.getElementById('progressBar').style.width = `${((currentQ + 1) / questions.length) * 100}%`;
+
+  const opts = document.getElementById('optionsList');
+  opts.innerHTML = '';
+  const labels = ['A', 'B', 'C', 'D'];
+
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="opt-letter">${labels[i]}</span>${opt}`;
+    btn.onclick = () => selectOption(i);
+
+    if (answers[currentQ] === i) btn.classList.add('selected');
+    if (revealed[currentQ]) {
+      btn.disabled = true;
+      if (i === q.ans) btn.classList.add('correct');
+      else if (i === answers[currentQ]) btn.classList.add('wrong');
+    }
+    opts.appendChild(btn);
+  });
+
+  const expBox = document.getElementById('explanationBox');
+  if (revealed[currentQ]) {
+    expBox.innerHTML = `<strong>💡 Explanation:</strong> ${q.exp}`;
+    expBox.classList.add('show');
+  } else {
+    expBox.classList.remove('show');
+  }
+
+  document.getElementById('prevBtn').disabled = currentQ === 0;
+  document.getElementById('nextBtn').textContent =
+    currentQ === questions.length - 1 ? 'Last Q' : 'Next →';
+  document.getElementById('nextBtn').disabled = currentQ === questions.length - 1;
+}
+
+// ═══════════════════════════════════════════
+// SELECT OPTION
+// ═══════════════════════════════════════════
+function selectOption(i) {
+  if (revealed[currentQ]) return;
+  answers[currentQ] = i;
+  revealed[currentQ] = true;
+  renderQuestion();
+  renderNav();
+}
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+function navigate(dir) {
+  currentQ = Math.max(0, Math.min(questions.length - 1, currentQ + dir));
+  renderQuestion();
+  updateNavDots();
+}
+
+function renderNav() {
+  const nav = document.getElementById('questionNav');
+  nav.innerHTML = '';
+  questions.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'q-dot';
+    dot.textContent = i + 1;
+    dot.onclick = () => { currentQ = i; renderQuestion(); updateNavDots(); };
+    if (i === currentQ) dot.classList.add('current');
+    else if (revealed[i]) {
+      dot.classList.add(answers[i] === questions[i].ans ? 'correct' : 'wrong');
+    } else if (answers[i] !== -1) dot.classList.add('answered');
+    nav.appendChild(dot);
+  });
+}
+function updateNavDots() { renderNav(); }
+
+// ═══════════════════════════════════════════
+// SUBMIT
+// ═══════════════════════════════════════════
+function confirmSubmit() {
+  const unanswered = answers.filter(a => a === -1).length;
+  const msg = unanswered > 0
+    ? `You have ${unanswered} unanswered question(s). Submit anyway?`
+    : 'Submit the test now?';
+  if (confirm(msg)) submitQuiz();
+}
+
+function submitQuiz() {
+  if (testSubmitted) return;
+  testSubmitted = true;
+  clearInterval(timerInterval);
+  document.getElementById('quizScreen').classList.remove('active');
+  document.getElementById('resultScreen').classList.add('active');
+  showResults();
+}
+
+// ═══════════════════════════════════════════
+// RESULTS
+// ═══════════════════════════════════════════
+function showResults() {
+  let correct = 0, wrong = 0, skipped = 0;
+  questions.forEach((q, i) => {
+    if (answers[i] === -1) skipped++;
+    else if (answers[i] === q.ans) correct++;
+    else wrong++;
+  });
+
+  const marksScore = correct * 4 - wrong * 1;
+  const maxMarks = questions.length * 4;
+  const pct = Math.round((correct / questions.length) * 100);
+
+  // Animate ring
+  setTimeout(() => {
+    const circumference = 2 * Math.PI * 65;
+    const offset = circumference - (pct / 100) * circumference;
+    document.getElementById('scoreCircle').style.transition = 'stroke-dashoffset 1.5s ease';
+    document.getElementById('scoreCircle').style.strokeDashoffset = offset;
+  }, 200);
+
+  document.getElementById('scorePct').textContent = pct + '%';
+
+  // Grade & message
+  let grade, emoji, title, sub;
+  if (pct >= 85)      { grade='A+'; emoji='🏆'; title='Outstanding!'; sub='Exceptional CUET preparation!'; }
+  else if (pct >= 70) { grade='A';  emoji='🎉'; title='Excellent Work!'; sub='You are well prepared!'; }
+  else if (pct >= 55) { grade='B';  emoji='👍'; title='Good Performance'; sub='A bit more revision needed.'; }
+  else if (pct >= 40) { grade='C';  emoji='📚'; title='Keep Practising'; sub='Review the topics you missed.'; }
+  else                { grade='D';  emoji='💪'; title='Need More Study'; sub='Go back to the notes and try again.'; }
+
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultSubtitle').textContent = sub;
+  const badge = document.getElementById('gradeBadge');
+  badge.textContent = `Grade: ${grade}`;
+  badge.style.background = pct >= 70 ? 'rgba(16,185,129,0.15)' : pct >= 40 ? 'rgba(245,158,11,0.15)' : 'rgba(239,68,68,0.15)';
+  badge.style.border = `1px solid ${pct >= 70 ? 'rgba(16,185,129,0.4)' : pct >= 40 ? 'rgba(245,158,11,0.4)' : 'rgba(239,68,68,0.4)'}`;
+  badge.style.color = pct >= 70 ? '#34d399' : pct >= 40 ? '#f59e0b' : '#f87171';
+
+  // Stats
+  document.getElementById('resultStats').innerHTML = `
+    <div class="res-stat"><div class="res-stat-val green">${correct}</div><div class="res-stat-label">Correct</div></div>
+    <div class="res-stat"><div class="res-stat-val red">${wrong}</div><div class="res-stat-label">Wrong</div></div>
+    <div class="res-stat"><div class="res-stat-val yellow">${skipped}</div><div class="res-stat-label">Skipped</div></div>
+    <div class="res-stat"><div class="res-stat-val blue">${marksScore}/${maxMarks}</div><div class="res-stat-label">Score (±marks)</div></div>
+  `;
+
+  // Topic breakdown
+  const topics = [...new Set(questions.map(q => q.topic))];
+  const tbHtml = topics.map(t => {
+    const topicQs = questions.filter(q => q.topic === t);
+    const topicCorrect = topicQs.filter((q, i) => {
+      const gi = questions.indexOf(q);
+      return answers[gi] === q.ans;
+    }).length;
+    const total = topicQs.length;
+    const topicPct = Math.round((topicCorrect / total) * 100);
+    return `<div class="tb-row">
+      <div class="tb-name">${t}</div>
+      <div class="tb-bar-wrap"><div class="tb-bar" style="width:${topicPct}%"></div></div>
+      <div class="tb-score">${topicCorrect}/${total}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('topicBreakdown').innerHTML =
+    `<h3>📊 Topic-wise Performance</h3>${tbHtml}`;
+
+  // Question review
+  let reviewHtml = '<h3>📝 Question Review</h3>';
+  questions.forEach((q, i) => {
+    const userAns = answers[i];
+    const isCorrect = userAns === q.ans;
+    const isSkipped = userAns === -1;
+    const cls = isSkipped ? 'skip-card' : isCorrect ? 'correct-card' : 'wrong-card';
+    const icon = isSkipped ? '⏭' : isCorrect ? '✅' : '❌';
+    const youLabel = isSkipped ? '— Skipped' : `Your answer: ${['A','B','C','D'][userAns]}. ${q.opts[userAns]}`;
+    reviewHtml += `<div class="review-card ${cls}">
+      <div class="review-q">${icon} Q${i+1}. ${q.q}</div>
+      <div class="review-answers">
+        ${isSkipped ? '' : `<div class="review-ans your ${isCorrect ? 'correct' : ''}">${youLabel}</div>`}
+        ${!isCorrect ? `<div class="review-ans right">✔ Correct: ${'ABCD'[q.ans]}. ${q.opts[q.ans]}</div>` : ''}
+      </div>
+      <div class="review-exp">💡 ${q.exp}</div>
+    </div>`;
+  });
+  document.getElementById('reviewSection').innerHTML = reviewHtml;
+}
+
+// ═══════════════════════════════════════════
+// RESTART
+// ═══════════════════════════════════════════
+function restartQuiz() {
+  currentQ = 0;
+  answers = new Array(questions.length).fill(-1);
+  revealed = new Array(questions.length).fill(false);
+  secondsLeft = 90 * 60;
+  testSubmitted = false;
+  document.getElementById('timerBox').classList.remove('warning');
+  document.getElementById('timerDisplay').textContent = '90:00';
+  document.getElementById('resultScreen').classList.remove('active');
+  document.getElementById('quizScreen').classList.add('active');
+  document.getElementById('scoreCircle').style.strokeDashoffset = 408.4;
+  renderQuestion();
+  renderNav();
+  startTimer();
+}
+</script>
+</body>
+</html>
